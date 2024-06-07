@@ -113,7 +113,7 @@ static inline ssize_t redir_write(int fd, const void *buf, size_t size, int in)
 		fd_set empty;
 		struct timeval waitbw; /* for bandwidth */
 		int rand_time;
-    
+
 		FD_ZERO(&empty);
 
 		rand_time = rand() % (random_wait * 2);
@@ -293,7 +293,7 @@ static void parse_args(int argc, char *argv[])
 		{"version",       no_argument,       0, 'v'},
 		{0, 0, 0, 0}
 	};
-	
+
 	extern int optind;
 	int opt, compat = 0;
 	char src[256] = "", dst[256] = "";
@@ -363,7 +363,7 @@ static void parse_args(int argc, char *argv[])
                 case 'm':
 			max_bandwidth = atol(optarg);
 			break;
- 
+
                 case 'o':
 			wait_in_out = atol(optarg);
 			wait_in     = wait_in_out & 1;
@@ -453,7 +453,7 @@ done:
 #ifndef NO_FTP
 	/* some kind of ftp being forwarded? */
 	if (ftp_type) {
-		if (!strncasecmp(ftp_type, "port", 4)) 
+		if (!strncasecmp(ftp_type, "port", 4))
 			ftp = FTP_PORT;
 		else if (!strncasecmp(ftp_type, "pasv", 4))
 			ftp = FTP_PASV;
@@ -462,7 +462,7 @@ done:
 		else
 			exit(usage(1));
 	}
-#endif	      
+#endif
 }
 
 #ifndef NO_FTP
@@ -470,7 +470,7 @@ done:
    the ftp server to point to a new redirector which we spawn,
    now it also change the PORT commando when the client accept the
    dataconnection */
-   
+
 void ftp_clean(int send, char *buf, ssize_t *bytes, int ftpsrv)
 {
 	socklen_t socksize = sizeof(struct sockaddr_in);
@@ -501,13 +501,13 @@ void ftp_clean(int send, char *buf, ssize_t *bytes, int ftpsrv)
 			redir_write(send, buf, (*bytes), REDIR_OUT);
 			return;
 		}
-		
+
 		/* parse the old address out of the buffer */
 		port_start = strchr(buf, '(');
 		sscanf(port_start, "(%d,%d,%d,%d,%d,%d", &remip[0], &remip[1],
 		       &remip[2], &remip[3], &rporthi, &rportlo);
 	}
-    
+
 	/* get the outside interface so we can listen */
 	if (getsockname(send, (struct sockaddr *)&sockname, &socksize) != 0) {
 		ERR("Failed getsockname(): %s", strerror(errno));
@@ -523,7 +523,7 @@ void ftp_clean(int send, char *buf, ssize_t *bytes, int ftpsrv)
 		ERR("Failed creating server socket: %s", strerror(errno));
 		exit(1);
 	}
-	
+
 	/* get the real info */
 	if (getsockname(sd, (struct sockaddr *)&sockname, &socksize) < 0) {
 		ERR("Failed getsockname(): %s", strerror(errno));
@@ -537,15 +537,15 @@ void ftp_clean(int send, char *buf, ssize_t *bytes, int ftpsrv)
 	if (ftpsrv == 0) {
 		/* send the new port and ipaddress to the server */
 		(*bytes) = snprintf(buf, len, "PORT %d,%d,%d,%d,%d,%d\n",
-				   sockname.sin_addr.s_addr & 0xff, 
-				   (sockname.sin_addr.s_addr >> 8) & 0xff, 
+				   sockname.sin_addr.s_addr & 0xff,
+				   (sockname.sin_addr.s_addr >> 8) & 0xff,
 				   (sockname.sin_addr.s_addr >> 16) & 0xff,
 				   sockname.sin_addr.s_addr >> 24, lporthi, lportlo);
 	} else {
 		/* send the new port and ipaddress to the client */
 		(*bytes) = snprintf(buf, len, "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\n",
-				   sockname.sin_addr.s_addr & 0xff, 
-				   (sockname.sin_addr.s_addr >> 8) & 0xff, 
+				   sockname.sin_addr.s_addr & 0xff,
+				   (sockname.sin_addr.s_addr >> 8) & 0xff,
 				   (sockname.sin_addr.s_addr >> 16) & 0xff,
 				   sockname.sin_addr.s_addr >> 24, lporthi, lportlo);
 	}
@@ -562,14 +562,14 @@ void ftp_clean(int send, char *buf, ssize_t *bytes, int ftpsrv)
 
 	/* now that we're bound and listening, we can safely send the new
 	   string without fear of them getting a connection refused. */
-	redir_write(send, buf, (*bytes), REDIR_OUT);     
+	redir_write(send, buf, (*bytes), REDIR_OUT);
 
 	/* make a new process to handle the dataconnection correctly,
-	   for the PASV mode this isn't a problem because after sending the 
+	   for the PASV mode this isn't a problem because after sending the
 	   PASV command, the data connection, get active. For the PORT command
 	   the server must send a success, if starting here with the copyloop
 	   the success command never arrive the client.*/
-	
+
 	switch (fork()) {
      	case -1: /* Error */
 		ERR("Failed calling fork(): %s", strerror(errno));
@@ -643,7 +643,7 @@ static void copyloop(int insock, int outsock, int tmo)
 #ifndef NO_FTP
 			if (ftp & FTP_PORT)
 				/* if we're correcting FTP, lookup for a PORT commando
-				   in the buffer, if yes change this and establish 
+				   in the buffer, if yes change this and establish
 				   a new redirector for the data */
 				ftp_clean(outsock, buf, &bytes, 0);
 			else
@@ -667,7 +667,7 @@ static void copyloop(int insock, int outsock, int tmo)
 			 * things */
 			if (ftp & FTP_PASV)
 				ftp_clean(insock, buf, &bytes,1);
-			else 
+			else
 #endif
 				if (redir_write(insock, buf, bytes, REDIR_IN) != bytes)
 					break;
@@ -816,8 +816,12 @@ static int target_connect(int client, struct sockaddr_in *target)
 		return -1;
 	}
 
-	INFO("Connecting %s:%d to %s:%d", inet_ntoa(peer.sin_addr), ntohs(peer.sin_port),
-	       inet_ntoa(target->sin_addr), ntohs(target->sin_port));
+	char* ip_buf;
+	ip_buf = (char*)malloc(1024);
+	strcpy(ip_buf, inet_ntoa(target->sin_addr));
+
+	INFO("Connecting %s:%d to %s:%d", inet_ntoa(peer.sin_addr), ntohs(peer.sin_port), ip_buf, ntohs(target->sin_port));
+	free(ip_buf);
 
 	return sd;
 }
@@ -841,7 +845,7 @@ static int client_accept(int sd, struct sockaddr_in *target)
 			return 1; /* all other errors assumed fatal */
 		}
 	}
-     
+
 	/*
 	 * Double fork here so we don't have to wait later
 	 * This detaches us from our parent so that the parent
@@ -880,7 +884,7 @@ static int client_accept(int sd, struct sockaddr_in *target)
      	default: /* Parent */
 		_exit(0);
 	}
-     
+
 	/* We are now the grandchild */
 	sd = target_connect(client, target);
 	if (sd < 0)
@@ -936,7 +940,7 @@ static int server_socket(char *addr, int port, int fail)
 	server.sin_port = htons(port);
 	if (addr != NULL) {
 		struct hostent *hp;
-	  
+
 		hp = gethostbyname(addr);
 		if (!hp) {
 			if (fail) {
@@ -954,7 +958,7 @@ static int server_socket(char *addr, int port, int fail)
 		DBG("local IP is default, listening on 0.0.0.0:%d", port);
 		server.sin_addr.s_addr = htonl(inet_addr("0.0.0.0"));
 	}
-     
+
 	rc = setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(reuse_addr));
 	if (rc != 0) {
 		if (fail) {
@@ -976,7 +980,7 @@ static int server_socket(char *addr, int port, int fail)
 		ERR("Failed setting socket option SO_LINGER: %s", strerror(errno));
 		exit(1);
 	}
-     
+
 	/*
 	 * Try to bind the address to the socket.
 	 */
@@ -989,7 +993,7 @@ static int server_socket(char *addr, int port, int fail)
 		ERR("Failed binding server socket: %s", strerror(errno));
 		exit(1);
 	}
-     
+
 	/*
 	 * Listen on the socket.
 	 */
@@ -1002,7 +1006,7 @@ static int server_socket(char *addr, int port, int fail)
 		ERR("Failed calling listen() on server socket: %s", strerror(errno));
 		exit(1);
 	}
-     
+
 	return sd;
 }
 
@@ -1034,7 +1038,7 @@ int main(int argc, char *argv[])
 		copyloop(STDIN_FILENO, sd, timeout);
 	} else {
 		int sd;
-	
+
 		if (background) {
 			DBG("Daemonizing ...");
 			if (-1 == daemon(0, 0)) {
